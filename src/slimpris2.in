@@ -910,11 +910,11 @@ class JSONConnection(LMSConnection):
         try:
             response = urllib2.urlopen(req)
         except:
-            logging.error("Error, query: %s", list(args))
+            logger.error("Error, query: %s", list(args))
             return
         response_txt = response.read()
         result = simplejson.loads(response_txt)['result']
-        logging.debug("query: %s, result: %s", list(args), result)
+        logger.debug("\nquery: %s\nresult: %s", params, result)
         return result
 
 class CLIConnection(LMSConnection):
@@ -939,7 +939,7 @@ class CLIConnection(LMSConnection):
         self._telnet.write(req + "\n")
         response = self._telnet.read_until("\n")[:-1].decode('utf8')
         
-        #logging.info("req: %s, response: %s", req, response)
+        #logging.info("req: %s response: %s", req, response)
         print "REQ:", req
         print "RES:", response
         
@@ -985,6 +985,7 @@ if __name__ == '__main__':
     DBusGMainLoop(set_as_default=True)
     
     path = ""
+    log_level = logging.INFO
     
     config = ConfigParser.SafeConfigParser()
     config.read(['/etc/slimpris2.conf', os.path.expanduser('~/.config/slimpris2/slimpris2.conf')])
@@ -999,6 +1000,9 @@ if __name__ == '__main__':
         params['password'] = config.get('Connection', 'password')
     if config.has_option('Connection', 'music_dir'):
         path = config.get('Connection', 'music_dir')
+    if config.has_option('Connection', 'debug'):
+        if config.get('Connection', 'debug').lower() == 'true':
+            log_level = logging.DEBUG 
 
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'hdp:', ['help', 'debug', 'path='])
@@ -1018,7 +1022,7 @@ if __name__ == '__main__':
         elif opt in ['-p', '--path']:
             path = arg
         elif opt in ['-d', '--debug']:
-            log_level = logging.DEBUG
+            log_level = logging.DEBUG # may also be enabled by config file (i.e. neither "wins")
 
     logging.basicConfig(format=log_format, level=log_level)
     logger = logging.getLogger('slimpris2')
