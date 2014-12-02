@@ -45,7 +45,7 @@ _ = gettext.gettext
 identity = "Squeezebox"
 params = {
     'host': 'localhost',
-    'port': 9000,
+    'port': '9000',
     'mac': '00:00:00:00:00:01',
     'password': None,
     'progname': sys.argv[0],
@@ -673,6 +673,8 @@ class MPRISInterface(dbus.service.Object):
     @dbus.service.method(__player_interface, in_signature='ox', out_signature='')
     def SetPosition(self, trackid, position):
         song = sb_wrapper._status #lms.get_playing_info()
+        if not 'id' in song:
+            print "no key in song object: ", song
         if trackid != dbus.ObjectPath('/org/mpris/MediaPlayer2/Track/%s' % song['id']): return
         # Convert position to seconds
         position = float(position) / 1000000
@@ -773,7 +775,7 @@ def format_metadata(data, context):
 
     if 'coverart' in metadata:
         if int(metadata['coverart']) == 1:
-            metadata['mpris:artUrl'] = "http://%s:%s/music/%s/cover_80x80.png" % (params['host'], params['port'], metadata['coverid'])
+            metadata['mpris:artUrl'] = lms.get_coverart_url(metadata['coverid'], 80)
 
     # Stream: populate some missings tags with stream's name
     if 'name' in metadata:
